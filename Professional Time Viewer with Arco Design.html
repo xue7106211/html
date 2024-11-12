@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>专业时间查看器</title>
+  <!-- Arco Design CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react/dist/css/arco.css">
+  <!-- Arco Design 图标库 -->
+  <link rel="stylesheet" href="https://unpkg.com/@arco-design/web-react/dist/css/arco-icon.css">
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@arco-design/web-react/dist/arco.min.js"></script>
+  <style>
+      .container {
+          max-width: 500px;
+          margin: 40px auto;
+          padding: 20px;
+      }
+      .time-display {
+          font-size: 3.5rem;
+          font-weight: bold;
+          text-align: center;
+          margin: 20px 0;
+      }
+      .date-display {
+          font-size: 1.5rem;
+          text-align: center;
+          margin-bottom: 20px;
+          color: var(--color-text-2);
+      }
+      .world-clock {
+          margin: 20px 0;
+          padding: 20px 0;
+          border-top: 1px solid var(--color-border);
+          border-bottom: 1px solid var(--color-border);
+      }
+      .stopwatch-display {
+          font-size: 2rem;
+          text-align: center;
+          margin: 20px 0;
+      }
+      .button-group {
+          display: flex;
+          justify-content: center;
+          gap: 16px;
+      }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+      const { useState, useEffect } = React;
+      const { 
+          Card, 
+          Select, 
+          Button, 
+          Space, 
+          Typography,
+          Switch
+      } = arco;
+
+      const { Title, Text } = Typography;
+
+      function TimeViewer() {
+          const [currentTime, setCurrentTime] = useState(new Date());
+          const [selectedTimeZone, setSelectedTimeZone] = useState('Asia/Shanghai');
+          const [stopwatchTime, setStopwatchTime] = useState(0);
+          const [isRunning, setIsRunning] = useState(false);
+          const [isDarkMode, setIsDarkMode] = useState(false);
+
+          // 更新当前时间
+          useEffect(() => {
+              const timer = setInterval(() => {
+                  setCurrentTime(new Date());
+              }, 1000);
+              return () => clearInterval(timer);
+          }, []);
+
+          // 秒表计时器
+          useEffect(() => {
+              let interval;
+              if (isRunning) {
+                  interval = setInterval(() => {
+                      setStopwatchTime(prev => prev + 1);
+                  }, 1000);
+              }
+              return () => clearInterval(interval);
+          }, [isRunning]);
+
+          // 格式化时间显示
+          const formatTime = (date) => {
+              return date.toLocaleTimeString('zh-CN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false
+              });
+          };
+
+          // 格式化日期显示
+          const formatDate = (date) => {
+              return date.toLocaleDateString('zh-CN', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+              });
+          };
+
+          // 格式化秒表时间
+          const formatStopwatch = (time) => {
+              const hours = Math.floor(time / 3600);
+              const minutes = Math.floor((time % 3600) / 60);
+              const seconds = time % 60;
+              return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+          };
+
+          // 世界时钟选项
+          const timeZones = [
+              { label: '上海', value: 'Asia/Shanghai' },
+              { label: '纽约', value: 'America/New_York' },
+              { label: '伦敦', value: 'Europe/London' },
+              { label: '东京', value: 'Asia/Tokyo' },
+              { label: '悉尼', value: 'Australia/Sydney' }
+          ];
+
+          // 获取世界时钟时间
+          const getWorldTime = () => {
+              return currentTime.toLocaleTimeString('zh-CN', {
+                  timeZone: selectedTimeZone,
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false
+              });
+          };
+
+          // 切换主题
+          useEffect(() => {
+              document.body.setAttribute('arco-theme', isDarkMode ? 'dark' : 'light');
+          }, [isDarkMode]);
+
+          return React.createElement(Card, { className: 'container' },
+              React.createElement(Space, { direction: 'vertical', style: { width: '100%' } },
+                  // 头部
+                  React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                      React.createElement(Title, { heading: 4 }, "时间查看器"),
+                      React.createElement(Switch, {
+                          checked: isDarkMode,
+                          onChange: setIsDarkMode,
+                          checkedIcon: React.createElement('span', null, "🌙"),
+                          uncheckedIcon: React.createElement('span', null, "☀️")
+                      })
+                  ),
+
+                  // 本地时间显示
+                  React.createElement('div', { className: 'time-display' },
+                      formatTime(currentTime)
+                  ),
+                  React.createElement('div', { className: 'date-display' },
+                      formatDate(currentTime)
+                  ),
+
+                  // 世界时钟
+                  React.createElement('div', { className: 'world-clock' },
+                      React.createElement(Select, {
+                          value: selectedTimeZone,
+                          onChange: setSelectedTimeZone,
+                          options: timeZones,
+                          style: { width: '100%', marginBottom: '16px' }
+                      }),
+                      React.createElement(Text, { style: { fontSize: '24px', display: 'block', textAlign: 'center' } },
+                          getWorldTime()
+                      )
+                  ),
+
+                  // 秒表
+                  React.createElement('div', { className: 'stopwatch-display' },
+                      formatStopwatch(stopwatchTime)
+                  ),
+                  React.createElement('div', { className: 'button-group' },
+                      React.createElement(Button, {
+                          type: 'primary',
+                          onClick: () => setIsRunning(!isRunning)
+                      }, isRunning ? '暂停' : '开始'),
+                      React.createElement(Button, {
+                          onClick: () => {
+                              setStopwatchTime(0);
+                              setIsRunning(false);
+                          }
+                      }, '重置')
+                  )
+              )
+          );
+      }
+
+      ReactDOM.render(
+          React.createElement(TimeViewer),
+          document.getElementById('root')
+      );
+  </script>
+</body>
+</html>
