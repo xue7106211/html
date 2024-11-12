@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>专业时间查看器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+      tailwind.config = {
+          darkMode: 'class',
+          theme: {
+              extend: {
+                  colors: {
+                      primary: '#3498db',
+                      secondary: '#666666',
+                  }
+              }
+          }
+      }
+  </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+  <div class="container max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+      <!-- 头部 -->
+      <div class="flex justify-between items-center mb-8">
+          <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">时间查看器</h2>
+          <button 
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300"
+              onclick="toggleTheme()"
+          >
+              <span class="text-xl">🌓</span>
+          </button>
+      </div>
+      
+      <!-- 本地时间部分 -->
+      <div class="text-center mb-8">
+          <div id="time" class="text-5xl font-bold text-gray-800 dark:text-white mb-2"></div>
+          <div id="date" class="text-xl text-gray-600 dark:text-gray-300"></div>
+      </div>
+      
+      <!-- 世界时钟部分 -->
+      <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mb-8">
+          <select 
+              id="worldClockSelect" 
+              onchange="updateWorldClock()"
+              class="w-full p-3 mb-4 rounded-lg border border-gray-200 dark:border-gray-700 
+                     bg-white dark:bg-gray-800 text-gray-800 dark:text-white
+                     focus:ring-2 focus:ring-primary focus:border-transparent
+                     transition-colors duration-300"
+          >
+              <option value="Asia/Shanghai">上海</option>
+              <option value="America/New_York">纽约</option>
+              <option value="Europe/London">伦敦</option>
+              <option value="Asia/Tokyo">东京</option>
+              <option value="Australia/Sydney">悉尼</option>
+          </select>
+          <div id="worldClockTime" 
+               class="text-3xl font-semibold text-gray-800 dark:text-white text-center">
+          </div>
+      </div>
+      
+      <!-- 秒表部分 -->
+      <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <div id="stopwatch" 
+               class="text-3xl font-semibold text-gray-800 dark:text-white text-center mb-4">
+              00:00:00
+          </div>
+          <div class="flex justify-center gap-4">
+              <button 
+                  id="startStop"
+                  onclick="toggleStopwatch()"
+                  class="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg
+                         transition-colors duration-300"
+              >
+                  开始
+              </button>
+              <button 
+                  onclick="resetStopwatch()"
+                  class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg
+                         transition-colors duration-300"
+              >
+                  重置
+              </button>
+          </div>
+      </div>
+  </div>
+
+  <script>
+      // 主题切换
+      function toggleTheme() {
+          document.documentElement.classList.toggle('dark');
+      }
+
+      // 时间和日期更新
+      function updateDateTime() {
+          const now = new Date();
+          const options = { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+          };
+          
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+          
+          document.getElementById('time').textContent = `${hours}:${minutes}:${seconds}`;
+          document.getElementById('date').textContent = now.toLocaleDateString('zh-CN', options);
+          
+          updateWorldClock();
+      }
+
+      // 世界时钟更新
+      function updateWorldClock() {
+          const selectedTimeZone = document.getElementById('worldClockSelect').value;
+          const now = new Date();
+          const options = { 
+              timeZone: selectedTimeZone,
+              hour: '2-digit', 
+              minute: '2-digit', 
+              second: '2-digit',
+              hour12: false
+          };
+          const timeString = now.toLocaleTimeString('zh-CN', options);
+          document.getElementById('worldClockTime').textContent = timeString;
+      }
+
+      // 秒表功能
+      let stopwatchInterval;
+      let stopwatchRunning = false;
+      let stopwatchTime = 0;
+
+      function toggleStopwatch() {
+          const button = document.getElementById('startStop');
+          if (!stopwatchRunning) {
+              stopwatchInterval = setInterval(updateStopwatch, 1000);
+              button.textContent = '暂停';
+              button.classList.remove('bg-primary');
+              button.classList.add('bg-yellow-500');
+          } else {
+              clearInterval(stopwatchInterval);
+              button.textContent = '开始';
+              button.classList.remove('bg-yellow-500');
+              button.classList.add('bg-primary');
+          }
+          stopwatchRunning = !stopwatchRunning;
+      }
+
+      function updateStopwatch() {
+          stopwatchTime++;
+          const hours = Math.floor(stopwatchTime / 3600);
+          const minutes = Math.floor((stopwatchTime % 3600) / 60);
+          const seconds = stopwatchTime % 60;
+          
+          document.getElementById('stopwatch').textContent = 
+              `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
+
+      function resetStopwatch() {
+          clearInterval(stopwatchInterval);
+          stopwatchTime = 0;
+          stopwatchRunning = false;
+          document.getElementById('stopwatch').textContent = '00:00:00';
+          const button = document.getElementById('startStop');
+          button.textContent = '开始';
+          button.classList.remove('bg-yellow-500');
+          button.classList.add('bg-primary');
+      }
+
+      // 初始化
+      setInterval(updateDateTime, 1000);
+      updateDateTime();
+  </script>
+</body>
+</html>
